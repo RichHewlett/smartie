@@ -5,6 +5,7 @@
 import time
 import argparse
 import serial
+import unicodedata
 
 TTY_PATH = '/dev/ttyUSB0'
 DELAY = 0.04
@@ -16,8 +17,8 @@ class Smartie(object):
     def __init__(self, path=TTY_PATH):
         self.lcd = serial.Serial(path, 9600)
         # initialise LCD using init sequence
-        self.lcd.write([b'\xFE', b'\x56', b'\x00'])
-
+        #self.lcd.write([b'\xFE', b'\x56', b'\x00'])
+        self.lcd.write([int.from_bytes(b'\xFE', "big"), int.from_bytes(b'\x56', "big"), int.from_bytes(b'\x00', "big")])
     #-------------------------------------------------------------
     # command - run raw command to LCD
     #-------------------------------------------------------------
@@ -81,8 +82,12 @@ class Smartie(object):
         """Write message to screen on line specified"""
         if line is None or line < 1 or line > 4:
             line = 1
+
+        data = unicodedata.normalize('NFKD', data)
+        data = data.encode('ascii', 'ignore')
         data = data.ljust(20)[:20]
-        self.command([b'\x47', b'\x01', chr(line).encode(), data.encode()])
+        # self.command([b'\x47', b'\x01', chr(line).encode(), data.encode()])
+        self.command([b'\x47', b'\x01', chr(line).encode(), data])
 
     #-------------------------------------------------------------
     # write_line_aligned - Left justified, Right justified or Centered
